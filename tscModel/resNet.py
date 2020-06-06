@@ -95,7 +95,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x=x.clone().detach().float().to(self.DEVICE).unsqueeze(1)
+        x = x.clone().detach().float().to(self.DEVICE).unsqueeze(1)
         # print('x:',x.shape)
         out = F.relu(self.bn1(self.conv1(x)))
         # print('con1:',out.shape)

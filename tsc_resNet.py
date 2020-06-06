@@ -8,27 +8,19 @@ Created on Sun Jan 12 12:59:26 2020
 import torch.utils.data as Data
 import pandas as pd
 import numpy as np
-import os
-import torchvision.transforms as transforms
 import time
-import re
-from torch import nn
 import torch
 import torch.optim as optim
-from sklearn.model_selection import train_test_split
-import random
 from tqdm import tqdm
 import math
-from torch.autograd import Variable
-import torch.nn.functional as F
 from torch import nn
 from tscModel.resNet import ResNet18
+from tscModel.atLstms import ATLstm
 
 DEVICE = torch.device("cuda")  # 让torch判断是否使用GPU
 
 
-# Data_set = pd.read_csv('new1.csv',header=None)
-# wwww = np.asarray(Data_set.loc[1:2].values,'float32')
+
 class MyDataset(Data.Dataset):
 
     def __init__(self, dataset, num_classes):
@@ -125,7 +117,8 @@ def themain(mission, num_classes):
         shuffle=True,
         num_workers=Num_workers)
 
-    model = ResNet18(num_classes, DEVICE).to(DEVICE)
+#    model = ResNet18(num_classes, DEVICE).to(DEVICE)
+    model = ATLstm(128, num_classes, DEVICE).to(DEVICE)
 
     lr = 0.002
     for i in range(epoch):
@@ -137,11 +130,11 @@ def themain(mission, num_classes):
     return acc
 
 
-A = pd.read_csv('F:\\Dataset\\Univariate\\dataset1.csv', header=None)
+A = pd.read_csv(root + 'dataset1.csv', header=None)
 accs = 128 * [0]
 for index, row in A.iterrows():
     print(row[1], row[7])  # 输出每一行
     accs[index] = themain(row[1], row[7])
     torch.cuda.empty_cache()
     A['8'] = pd.Series(accs)
-    A.to_csv('F:\\Dataset\\Univariate\\Result1.csv', index=0)
+    A.to_csv(root + 'Result1.csv', index=0)
