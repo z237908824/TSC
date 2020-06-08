@@ -43,7 +43,7 @@ class MyDataset(Data.Dataset):
 
 def train(model, device, dataiter, optimizer, train_set):  # 训练函数
     model.train()  # 将model设定为训练模式
-
+    aloss = 0
     for iteration in range(math.ceil(len(train_set) / batch_size)):
         data, label = next(dataiter)
         label = label.clone().detach().float().to(device)
@@ -51,15 +51,15 @@ def train(model, device, dataiter, optimizer, train_set):  # 训练函数
 
         output = model(data)
 #        print(output.shape, label.shape)
-#        loss_function = nn.MSELoss()
-#        loss = loss_function(output, label)
-        loss_function = nn.CrossEntropyLoss()
-        loss = loss_function(output, torch.argmax(label, dim=1))
-
+        loss_function = nn.MSELoss()
+        loss = loss_function(output, label)
+#        loss_function = nn.CrossEntropyLoss()
+#        loss = loss_function(output, torch.argmax(label, dim=1))
+        aloss += loss
         optimizer.zero_grad()  # 清除旧的梯度信息
         loss.backward()  # 针对损失函数的后向传播
         optimizer.step()  # 反向传播后的梯度下降
-    return loss
+    return aloss/iteration
 
 
 
@@ -111,9 +111,10 @@ def themain(mission, num_classes):
         lr = lr * 1.1 if i < 9 else lr * 0.9
         train_dataiter = iter(Traindataloader)
         optimizer = optim.Adam(model.parameters(), lr=lr)  # 优化i器
-        loss = train(model, DEVICE, train_dataiter, optimizer, train_set).cpu().numpy()
-        if (i + 1) % 100 == 0:  # 每 100 次输出结果
-            print('Epoch: {}, Loss: {:.5f}'.format( + 1, loss))
+        loss = train(model, DEVICE, train_dataiter, optimizer, train_set)
+        loss = loss.cpu().detach().numpy()
+        if (i + 1) % 10 == 0:  # 每 100 次输出结果
+            print('Epoch: {}, Loss: {:.5f}'.format(i + 1, loss))
     test_dataiter = iter(Testdataloader)
     acc = test(model, DEVICE, test_dataiter, test_set)
 
