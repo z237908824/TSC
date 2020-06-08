@@ -47,62 +47,49 @@ def train(model, device, dataiter, optimizer, train_set):  # 训练函数
 
     for iteration in range(math.ceil(len(train_set) / batch_size)):
         data, label = next(dataiter)
-        # print(data.shape)
         label = label.clone().detach().float().to(device)
         data = data.clone().detach().float().to(device)
 
         output = model(data)
-        # print(output.shape)
+#        print(output.shape, label.shape)
         loss_function = nn.MSELoss()
         loss = loss_function(output, label)
+#        loss_function = nn.CrossEntropyLoss()
+#        loss = loss_function(output, torch.argmax(label, dim=1))
 
         optimizer.zero_grad()  # 清除旧的梯度信息
         loss.backward()  # 针对损失函数的后向传播
         optimizer.step()  # 反向传播后的梯度下降
-        time_end = time.time()
-        # print('训练时间：',time_end-time_start)
 
-        time_start = time.time()
-        # corrent=torch.eq(torch.argmax(output, dim=1),torch.argmax(a_label, dim=1))
-        # acc = torch.mean(corrent.float())
-        time_end = time.time()
-        # print('善后时间：',time_end-time_start)
-        # print('准确率为',acc)
-        # print(loss)
-
-    # print("1个EPOCH结束，loss=",loss)
-
+        if (iteration + 1) % 100 == 0: # 每 100 次输出结果
+            print('Epoch: {}, Loss: {:.5f}'.format(iteration + 1, loss))
 
 def test(model, device, dataiter, test_set):  # 训练函数
     model.eval()  # 将model设定为训练模式
     acc = 0
-    Alpha = []
-    # aaa=0
     for iteration in tqdm(range(math.ceil(len(test_set) / batch_size))):
         data, label = next(dataiter)
         label = label.clone().detach().float().to(device)
 
         output = model(data)
-        loss_function = nn.MSELoss()
-        loss = loss_function(output, label)
 
         corrent = torch.eq(torch.argmax(output, dim=1), torch.argmax(label, dim=1))
         acc += torch.mean(corrent.float())
-        # aaa+=1
 
     print("1个EPOCH结束，acc=", acc.cpu().numpy() / (iteration + 1))
     return acc.cpu().numpy() / (iteration + 1)
 
 
-batch_size = 10
+batch_size = 100
 Num_workers = 0
-epoch = 1
-root = 'F:\\Dataset\\Univariate\\'
+epoch = 1000
+# root = 'F:\\Dataset\\Univariate\\'
+root = '/root/disk/Zz/TSC_Data/Univariate/'
 
 
 def themain(mission, num_classes):
-    train_set = pd.read_csv(root + mission + '\\' + mission + '_TRAIN.csv', header=None)
-    test_set = pd.read_csv(root + mission + '\\' + mission + '_TEST.csv', header=None)
+    train_set = pd.read_csv(root + mission + '/' + mission + '_TRAIN.csv', header=None)
+    test_set = pd.read_csv(root + mission + '/' + mission + '_TEST.csv', header=None)
     train_dataset = MyDataset(train_set, num_classes)
     Traindataloader = Data.DataLoader(
         dataset=train_dataset,
@@ -118,15 +105,16 @@ def themain(mission, num_classes):
         num_workers=Num_workers)
 
 #    model = ResNet18(num_classes, DEVICE).to(DEVICE)
-    model = ATLstm(128, num_classes, DEVICE).to(DEVICE)
+    model = ATLstm(256, num_classes, DEVICE).to(DEVICE)
 
-    lr = 0.002
+    lr = 0.0008
     for i in range(epoch):
-        Traindataiter = iter(Traindataloader)
-        Testdataiter = iter(Testdataloader)
-        optimizer = optim.Adam(model.parameters(), lr=lr * 0.9)  # 优化器
-        train(model, DEVICE, Traindataiter, optimizer, train_set)
-    acc = test(model, DEVICE, Testdataiter, test_set)
+        lr = lr * 1.1 if i < 9 else lr * 0.9
+        train_dataiter = iter(Traindataloader)
+        test_dataiter = iter(Testdataloader)
+        optimizer = optim.Adam(model.parameters(), lr=lr)  # 优化器
+        train(model, DEVICE, train_dataiter, optimizer, train_set)
+    acc = test(model, DEVICE, test_dataiter, test_set)
     return acc
 
 

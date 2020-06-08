@@ -2,10 +2,10 @@ from torch import nn
 import torch.nn.functional as F
 import torch
 
-class ATLstm(nn.Module):
+class DeepAR(nn.Module):
 
     def __init__(self, hidden_size, classnum, device, num_layers=1, batch_first=True, dropout=0, bidirectional=True):
-        super(ATLstm, self).__init__()
+        super(DeepAR, self).__init__()
         self.DEVICE = device
         self.embedding_layer = embedding_layer(hidden_size)
         self.lstm = nn.LSTM(hidden_size,
@@ -22,6 +22,7 @@ class ATLstm(nn.Module):
         x = self.embedding_layer(x)
         output, _ = self.lstm(x)
         output, alpha = self.attention_layer(output)
+
         out = self.output_layer(output)
         out = F.softmax(out, dim=1)
 
