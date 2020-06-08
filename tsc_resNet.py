@@ -8,7 +8,6 @@ Created on Sun Jan 12 12:59:26 2020
 import torch.utils.data as Data
 import pandas as pd
 import numpy as np
-import time
 import torch
 import torch.optim as optim
 from tqdm import tqdm
@@ -52,17 +51,17 @@ def train(model, device, dataiter, optimizer, train_set):  # 训练函数
 
         output = model(data)
 #        print(output.shape, label.shape)
-        loss_function = nn.MSELoss()
-        loss = loss_function(output, label)
-#        loss_function = nn.CrossEntropyLoss()
-#        loss = loss_function(output, torch.argmax(label, dim=1))
+#        loss_function = nn.MSELoss()
+#        loss = loss_function(output, label)
+        loss_function = nn.CrossEntropyLoss()
+        loss = loss_function(output, torch.argmax(label, dim=1))
 
         optimizer.zero_grad()  # 清除旧的梯度信息
         loss.backward()  # 针对损失函数的后向传播
         optimizer.step()  # 反向传播后的梯度下降
+    return loss
 
-        if (iteration + 1) % 100 == 0: # 每 100 次输出结果
-            print('Epoch: {}, Loss: {:.5f}'.format(iteration + 1, loss))
+
 
 def test(model, device, dataiter, test_set):  # 训练函数
     model.eval()  # 将model设定为训练模式
@@ -76,7 +75,7 @@ def test(model, device, dataiter, test_set):  # 训练函数
         corrent = torch.eq(torch.argmax(output, dim=1), torch.argmax(label, dim=1))
         acc += torch.mean(corrent.float())
 
-    print("1个EPOCH结束，acc=", acc.cpu().numpy() / (iteration + 1))
+    print("测试acc=", acc.cpu().numpy() / (iteration + 1))
     return acc.cpu().numpy() / (iteration + 1)
 
 
@@ -111,10 +110,13 @@ def themain(mission, num_classes):
     for i in range(epoch):
         lr = lr * 1.1 if i < 9 else lr * 0.9
         train_dataiter = iter(Traindataloader)
-        test_dataiter = iter(Testdataloader)
-        optimizer = optim.Adam(model.parameters(), lr=lr)  # 优化器
-        train(model, DEVICE, train_dataiter, optimizer, train_set)
+        optimizer = optim.Adam(model.parameters(), lr=lr)  # 优化i器
+        loss = train(model, DEVICE, train_dataiter, optimizer, train_set).cpu().numpy()
+        if (i + 1) % 100 == 0:  # 每 100 次输出结果
+            print('Epoch: {}, Loss: {:.5f}'.format( + 1, loss))
+    test_dataiter = iter(Testdataloader)
     acc = test(model, DEVICE, test_dataiter, test_set)
+
     return acc
 
 
