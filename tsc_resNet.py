@@ -49,7 +49,7 @@ def train(model, device, dataiter, optimizer, train_set):  # 训练函数
         label = label.clone().detach().float().to(device)
         data = data.clone().detach().float().to(device)
 
-        output, avg_pool2d = model(data)
+        output = model(data)
 #        print(output.shape, label.shape)
         loss_function = nn.MSELoss()
         loss = loss_function(output, label)
@@ -66,31 +66,27 @@ def train(model, device, dataiter, optimizer, train_set):  # 训练函数
 def test(model, device, dataiter, test_set):  # 训练函数
     model.eval()  # 将model设定为训练模式
     acc = 0
-    avg_pool2d_eb = []
     for iteration in tqdm(range(math.ceil(len(test_set) / batch_size))):
         data, label = next(dataiter)
         label = label.clone().detach().float().to(device)
 
-        output, avg_pool2d = model(data)
+        output = model(data)
 
         corrent = torch.eq(torch.argmax(output, dim=1), torch.argmax(label, dim=1))
         acc += torch.mean(corrent.float())
-        avg_pool2d_eb.append(avg_pool2d.cpu().detach().numpy())
 
     print("测试acc=", acc.cpu().numpy() / (iteration + 1))
-
-    return acc.cpu().numpy() / (iteration + 1), avg_pool2d_eb
+    return acc.cpu().numpy() / (iteration + 1)
 
 
 batch_size = 100
 Num_workers = 0
 epoch = 1000
-#root = 'F:\\Dataset\\Univariate\\'
+# root = 'F:\\Dataset\\Univariate\\'
 root = '/root/disk/Zz/TSC_Data/Univariate/'
 
 
 def themain(mission, num_classes):
-
     train_set = pd.read_csv(root + mission + '/' + mission + '_TRAIN.csv', header=None)
     test_set = pd.read_csv(root + mission + '/' + mission + '_TEST.csv', header=None)
     train_dataset = MyDataset(train_set, num_classes)
@@ -104,11 +100,11 @@ def themain(mission, num_classes):
     Testdataloader = Data.DataLoader(
         dataset=test_dataset,
         batch_size=batch_size,
-        shuffle=False,
+        shuffle=True,
         num_workers=Num_workers)
 
     model = ResNet18(num_classes, DEVICE).to(DEVICE)
- #   model = ATLstm(256, num_classes, DEVICE).to(DEVICE)
+   # model = ATLstm(256, num_classes, DEVICE).to(DEVICE)
 
     lr = 0.0008
     for i in range(epoch):
@@ -120,24 +116,16 @@ def themain(mission, num_classes):
         if (i + 1) % 10 == 0:  # 每 100 次输出结果
             print('Epoch: {}, Loss: {:.5f}'.format(i + 1, loss))
     test_dataiter = iter(Testdataloader)
-    acc, avg_pool2d_eb = test(model, DEVICE, test_dataiter, test_set)
+    acc = test(model, DEVICE, test_dataiter, test_set)
 
-    return acc, avg_pool2d_eb
+    return acc
 
 
 A = pd.read_csv(root + 'dataset1.csv', header=None)
 accs = 128 * [0]
 for index, row in A.iterrows():
     print(row[1], row[7])  # 输出每一行
-    if row[1] == 'HouseTwenty':
-        accs[index], avg_pool2d_eb = themain(row[1], row[7])
-        torch.cuda.empty_cache()
-        A['8'] = pd.Series(accs)
-        A.to_csv(root + 'Result1.csv', index=0)
-for i in range(len(avg_pool2d_eb)):
-    print(i)
-    if i > 0:
-        temp = np.concatenate((temp, avg_pool2d_eb[i].squeeze(2)))
-    else:
-        temp = avg_pool2d_eb[0].squeeze(2)
-np.savetxt('fname.txt', temp)
+    accs[index] = themain(row[1], row[7])
+    torch.cuda.empty_cache()
+    A['8'] = pd.Series(accs)
+    A.to_csv(root + 'Result1.csv', index=0)

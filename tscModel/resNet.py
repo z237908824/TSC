@@ -96,7 +96,7 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         x = x.clone().detach().float().to(self.DEVICE).unsqueeze(1)
-        # print('x:',x.shape)
+        #print('x:',x.shape)
         out = F.relu(self.bn1(self.conv1(x)))
         # print('con1:',out.shape)
         out = self.layer1(out)
@@ -114,8 +114,8 @@ class ResNet(nn.Module):
         out = out.view(out.size(0), -1)
         # print(out.shape)
         out = self.linear(out)
-        # print(out.shape)
-        return out, avg_pool2d
+        #print(out.shape)
+        return out
 
 
 def ResNet18(num_classes,DEVICE):
