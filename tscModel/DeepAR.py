@@ -2,6 +2,7 @@ from torch import nn
 import torch.nn.functional as F
 import torch
 
+
 class DeepAR(nn.Module):
 
     def __init__(self, hidden_size, classnum, device, num_layers=1, batch_first=True, dropout=0, bidirectional=True):

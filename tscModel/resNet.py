@@ -109,12 +109,13 @@ class ResNet(nn.Module):
         # print('layer4:',out.shape)
         # out = F.avg_pool2d(out, out.shape[2,3])
         out = self.AAPool(out)
+        avg_pool2d = out
         # print('avg_pool2d:',out.shape)
         out = out.view(out.size(0), -1)
         # print(out.shape)
         out = self.linear(out)
         # print(out.shape)
-        return out
+        return out, avg_pool2d
 
 
 def ResNet18(num_classes,DEVICE):
