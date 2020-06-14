@@ -15,6 +15,7 @@ import math
 from torch import nn
 from tscModel.resNet import ResNet18
 from tscModel.atLstms import ATLstm
+from tscModel.Transformer import Transformer
 
 DEVICE = torch.device("cuda")  # 让torch判断是否使用GPU
 
@@ -50,7 +51,7 @@ def train(model, device, dataiter, optimizer, train_set):  # 训练函数
         data = data.clone().detach().float().to(device)
 
         output = model(data)
-#        print(output.shape, label.shape)
+        print(output.shape, label.shape)
         loss_function = nn.MSELoss()
         loss = loss_function(output, label)
 #        loss_function = nn.CrossEntropyLoss()
@@ -103,7 +104,7 @@ def themain(mission, num_classes):
         shuffle=True,
         num_workers=Num_workers)
 
-    model = ResNet18(num_classes, DEVICE).to(DEVICE)
+    model = Transformer(128, num_classes, 0.1, 6, 8, DEVICE).to(DEVICE)
    # model = ATLstm(256, num_classes, DEVICE).to(DEVICE)
 
     lr = 0.0008
